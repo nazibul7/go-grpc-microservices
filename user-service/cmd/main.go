@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	connStr := `postgres://postgres:password@localhost:5432/grpcdb?sslmode=disable`
+	connStr := `postgres://user_user:user_password@localhost:5434/user_db?sslmode=disable`
 	if err := db.RunMigrations(connStr); err != nil {
 		log.Fatal(err)
 	}
