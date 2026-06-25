@@ -14,7 +14,7 @@ func RunMigrations(dbURL string) error {
 	// Create a migration instance.
 	// Parameter 1: location of migration files.
 	// Parameter 2: database connection URL.
-	m, err := migrate.New("file://internal/migrations/", dbURL)
+	m, err := migrate.New("file://migrations/", dbURL)
 	if err != nil {
 		return err
 	}
