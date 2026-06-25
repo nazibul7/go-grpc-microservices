@@ -8,7 +8,7 @@ service AuthService {
   rpc SignUp(SignUpRequest) returns (AuthResponse);
   rpc SignIn(SignInRequest) returns (AuthResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (AuthResponse);
-  rpc SignOut(RefreshTokenRequest) returns (LogoutResponse);
+  rpc SignOut(RefreshTokenRequest) returns (SignOutResponse);
 }
 
 message SignUpRequest {
@@ -36,6 +36,6 @@ message RefreshTokenRequest {
   string refresh_token = 1;
 }
 
-message LogoutResponse {
+message SignOutResponse {
   string message = 1;
 }

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v3.12.4
-// source: proto/auth/auth.proto
+// source: auth/auth.proto
 
 package auth
 
@@ -32,7 +32,7 @@ type AuthServiceClient interface {
 	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*AuthResponse, error)
-	SignOut(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
+	SignOut(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*SignOutResponse, error)
 }
 
 type authServiceClient struct {
@@ -73,9 +73,9 @@ func (c *authServiceClient) RefreshToken(ctx context.Context, in *RefreshTokenRe
 	return out, nil
 }
 
-func (c *authServiceClient) SignOut(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*LogoutResponse, error) {
+func (c *authServiceClient) SignOut(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*SignOutResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LogoutResponse)
+	out := new(SignOutResponse)
 	err := c.cc.Invoke(ctx, AuthService_SignOut_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ type AuthServiceServer interface {
 	SignUp(context.Context, *SignUpRequest) (*AuthResponse, error)
 	SignIn(context.Context, *SignInRequest) (*AuthResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*AuthResponse, error)
-	SignOut(context.Context, *RefreshTokenRequest) (*LogoutResponse, error)
+	SignOut(context.Context, *RefreshTokenRequest) (*SignOutResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -110,7 +110,7 @@ func (UnimplementedAuthServiceServer) SignIn(context.Context, *SignInRequest) (*
 func (UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*AuthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RefreshToken not implemented")
 }
-func (UnimplementedAuthServiceServer) SignOut(context.Context, *RefreshTokenRequest) (*LogoutResponse, error) {
+func (UnimplementedAuthServiceServer) SignOut(context.Context, *RefreshTokenRequest) (*SignOutResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SignOut not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
@@ -231,5 +231,5 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/auth/auth.proto",
+	Metadata: "auth/auth.proto",
 }
