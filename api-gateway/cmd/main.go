@@ -6,6 +6,7 @@ import (
 
 	"github.com/nazibul7/go-grpc-microservices/api-gateway/internal/client"
 	"github.com/nazibul7/go-grpc-microservices/api-gateway/internal/handler"
+	"github.com/nazibul7/go-grpc-microservices/api-gateway/internal/router"
 )
 
 func main() {
@@ -15,15 +16,19 @@ func main() {
 	}
 	defer conn.Close()
 
+	conn, authClient, err := client.NewAuthClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
 	userHandler := handler.NewUserHandler(userClient)
+	authHandler := handler.NewAuthHandler(authClient)
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /user", userHandler.CreateUser)
-	mux.HandleFunc("GET /user/{id}", userHandler.GetUser)
-	mux.HandleFunc("PATCH /user/{id}", userHandler.UpdateUser)
-	mux.HandleFunc("DELETE /user/{id}", userHandler.DeleteUser)
-
+	router.RegisterRouter(mux, authHandler, userHandler)
+	
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: mux,
