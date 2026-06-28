@@ -11,7 +11,7 @@ import (
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/model"
 )
 
-func GenerateAccessToken(userID int64, email string, role model.Role, expires_at time.Duration, secret string) (string, error) {
+func GenerateAccessToken(userID string, email string, role model.Role, expires_at time.Duration, secret string) (string, error) {
 	expiresAt := time.Now().Add(expires_at)
 	claim := model.Claims{
 		UserID:    userID,

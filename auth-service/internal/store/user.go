@@ -15,13 +15,14 @@ func NewUserStore() *UserStore {
 func (s *UserStore) Create(
 	ctx context.Context,
 	db DBTX,
+	userID string,
 	email string,
 	passwordHash string,
 ) (*model.User, error) {
 
 	query := `
-		INSERT INTO users(email, password_hash)
-		VALUES($1, $2)
+		INSERT INTO users(id, email, password_hash)
+		VALUES($1, $2, $3)
 		RETURNING id, email
 	`
 
@@ -30,6 +31,7 @@ func (s *UserStore) Create(
 	err := db.QueryRowContext(
 		ctx,
 		query,
+		userID,
 		email,
 		passwordHash,
 	).Scan(
