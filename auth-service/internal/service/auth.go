@@ -6,24 +6,31 @@ import (
 	"time"
 
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/dto"
+	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/model"
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/store"
+	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/utils"
+
+	userpb "github.com/nazibul7/go-grpc-microservices/proto/user"
 )
 
 type AuthService struct {
 	db                *sql.DB
 	userStore         *store.UserStore
 	refreshTokenStore *store.RefreshTokenStore
+	userClient        userpb.UserServiceClient
 }
 
 func NewAuthService(
 	db *sql.DB,
 	userStore *store.UserStore,
 	refreshTokenStore *store.RefreshTokenStore,
+	userClient userpb.UserServiceClient,
 ) *AuthService {
 	return &AuthService{
 		db:                db,
 		userStore:         userStore,
 		refreshTokenStore: refreshTokenStore,
+		userClient:        userClient,
 	}
 }
 
@@ -32,8 +39,20 @@ func (s *AuthService) SignUp(
 	req dto.SignUpRequest,
 ) (*dto.SignUpResponse, error) {
 
+	userResp, err := s.userClient.CreateUser(ctx, &userpb.CreateUserRequest{
+		Name:  req.Name,
+		Email: req.Email,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	// hash password
-	passwordHash := req.Password // replace with bcrypt
+	passwordHash, err := utils.HashPassword(req.Password)
+	if err != nil {
+		return nil, err
+	}
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -45,6 +64,7 @@ func (s *AuthService) SignUp(
 	user, err := s.userStore.Create(
 		ctx,
 		tx,
+		userResp.Id,
 		req.Email,
 		passwordHash,
 	)
@@ -53,16 +73,21 @@ func (s *AuthService) SignUp(
 	}
 
 	// generate tokens
-	accessToken := "access-token"
-	refreshToken := "refresh-token"
-
+	accessToken, err := utils.GenerateAccessToken(user.ID, user.Email, model.Role(user.Role), 15*time.Minute, "")
+	if err != nil {
+		return nil, err
+	}
+	refreshToken, expires_at, err := utils.GenerateRefreshToken()
+	if err != nil {
+		return nil, err
+	}
 	// store hashed refresh token
 	err = s.refreshTokenStore.Create(
 		ctx,
 		tx,
 		user.ID,
 		refreshToken,
-		time.Now().Add(7*24*time.Hour),
+		expires_at,
 	)
 	if err != nil {
 		return nil, err
