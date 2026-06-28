@@ -14,7 +14,7 @@ func NewRefreshTokenStore() *RefreshTokenStore {
 func (s *RefreshTokenStore) Create(
 	ctx context.Context,
 	db DBTX,
-	userID int64,
+	userID string,
 	tokenHash string,
 	expiresAt time.Time,
 ) error {

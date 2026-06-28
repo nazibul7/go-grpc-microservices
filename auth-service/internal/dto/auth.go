@@ -1,12 +1,13 @@
 package dto
 
 type SignUpRequest struct {
+	Name     string
 	Email    string
 	Password string
 }
 
 type SignUpResponse struct {
-	UserID       int64
+	UserID       string
 	AccessToken  string
 	RefreshToken string
 }
@@ -17,7 +18,7 @@ type SignInRequest struct {
 }
 
 type SignInResponse struct {
-	UserID       int64
+	UserID       string
 	AccessToken  string
 	RefreshToken string
 }
@@ -27,7 +28,7 @@ type RefreshTokenRequest struct {
 }
 
 type RefreshTokenResponse struct {
-	UserID       int64
+	UserID       string
 	AccessToken  string
 	RefreshToken string
 }
