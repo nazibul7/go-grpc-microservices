@@ -26,7 +26,7 @@ func (s *UserStore) CreateUser(ctx context.Context, req model.CreateUserRequest)
 	return user, nil
 }
 
-func (s *UserStore) GetUser(ctx context.Context, id int64) (model.User, error) {
+func (s *UserStore) GetUser(ctx context.Context, id string) (model.User, error) {
 	query := `SELECT id, name, email FROM users WHERE id = $1`
 
 	var user model.User
@@ -54,7 +54,7 @@ func (s *UserStore) UpdateUser(ctx context.Context, req model.UpdateUserRequest)
 	return user, nil
 }
 
-func (s *UserStore) DeleteUser(ctx context.Context, id int64) (model.DeleteUserResponse, error) {
+func (s *UserStore) DeleteUser(ctx context.Context, id string) (model.DeleteUserResponse, error) {
 	query := `DELETE FROM users WHERE id = $1`
 
 	result, err := s.db.ExecContext(ctx, query, id)

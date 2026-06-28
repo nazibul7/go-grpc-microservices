@@ -1,7 +1,7 @@
 package model
 
 type User struct {
-	ID    int64
+	ID    string
 	Name  string
 	Email string
 }
@@ -12,11 +12,11 @@ type CreateUserRequest struct {
 }
 
 type IDRequest struct {
-	ID int64
+	ID string
 }
 
 type UpdateUserRequest struct {
-	ID    int64
+	ID    string
 	Name  string
 	Email string
 }

@@ -28,7 +28,7 @@ func (s *UserService) CreateUser(ctx context.Context, req model.CreateUserReques
 }
 
 func (s *UserService) GetUser(ctx context.Context, req model.IDRequest) (model.User, error) {
-	if req.ID <= 0 {
+	if req.ID == "" {
 		return model.User{}, errors.New("invalid user id")
 	}
 
@@ -36,7 +36,7 @@ func (s *UserService) GetUser(ctx context.Context, req model.IDRequest) (model.U
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, req model.UpdateUserRequest) (model.User, error) {
-	if req.ID <= 0 {
+	if req.ID == "" {
 		return model.User{}, errors.New("invalid user id")
 	}
 
@@ -52,7 +52,7 @@ func (s *UserService) UpdateUser(ctx context.Context, req model.UpdateUserReques
 }
 
 func (s *UserService) DeleteUser(ctx context.Context, req model.IDRequest) (model.DeleteUserResponse, error) {
-	if req.ID <= 0 {
+	if req.ID == "" {
 		return model.DeleteUserResponse{},
 			errors.New("invalid user id")
 	}
