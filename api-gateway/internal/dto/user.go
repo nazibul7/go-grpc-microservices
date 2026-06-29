@@ -1,6 +1,5 @@
 package dto
 
-
 type CreateUserRequest struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -12,7 +11,7 @@ type UpdateUserRequest struct {
 }
 
 type UserResponse struct {
-	ID    int64  `json:"id"`
+	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }

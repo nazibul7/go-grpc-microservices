@@ -3,22 +3,22 @@ package request
 import (
 	"errors"
 	"net/http"
-	"strconv"
+
+	"github.com/google/uuid"
 )
 
-// ParseID extracts and validates an integer ID from a URL path parameter.
-// Returns the ID and true on success, writes HTTP error and returns false on failure.
+// ParseID extracts and validates a UUID from the URL path.
 
-func ParseID(r *http.Request) (int64, error) {
-	idStr := r.PathValue("id")
+func ParseID(r *http.Request) (string, error) {
+	id := r.PathValue("id")
 
-	if idStr == "" {
-		return 0, errors.New("missing id")
+	if id == "" {
+		return "", errors.New("missing id")
 	}
 
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil || id <= 0 {
-		return 0, errors.New("invalid id")
+	if _, err := uuid.Parse(id); err != nil {
+		return "", errors.New("invalid id")
 	}
+
 	return id, nil
 }
