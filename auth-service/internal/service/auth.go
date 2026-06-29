@@ -118,17 +118,24 @@ func (s *AuthService) SignIn(
 		return nil, err
 	}
 
-	// verify password
+	if err := utils.VerifyPassword(user.PasswordHash, req.Password); err != nil {
+		return nil, err
+	}
 
-	accessToken := "access-token"
-	refreshToken := "refresh-token"
-
+	accessToken, err := utils.GenerateAccessToken(user.ID, user.Email, model.Role(user.Role), 15*time.Minute, "")
+	if err != nil {
+		return nil, err
+	}
+	refreshToken, expires_at, err := utils.GenerateRefreshToken()
+	if err != nil {
+		return nil, err
+	}
 	err = s.refreshTokenStore.Create(
 		ctx,
 		s.db,
 		user.ID,
 		refreshToken,
-		time.Now().Add(7*24*time.Hour),
+		expires_at,
 	)
 	if err != nil {
 		return nil, err
@@ -164,8 +171,40 @@ func (s *AuthService) RefreshToken(
 		return nil, err
 	}
 
-	newAccessToken := "new-access-token"
-	newRefreshToken := "new-refresh-token"
+	newAccessToken, err := utils.GenerateAccessToken(user.ID, user.Email, model.Role(user.Role), 15*time.Minute, "")
+	if err != nil {
+		return nil, err
+	}
+	newRefreshToken, expires_at, err := utils.GenerateRefreshToken()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer tx.Rollback()
+
+	if err := s.refreshTokenStore.Revoke(ctx, tx, req.RefreshToken); err != nil {
+		return nil, err
+	}
+	// store hashed refresh token
+	err = s.refreshTokenStore.Create(
+		ctx,
+		tx,
+		user.ID,
+		newRefreshToken,
+		expires_at,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
 
 	return &dto.RefreshTokenResponse{
 		UserID:       user.ID,
