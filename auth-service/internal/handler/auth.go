@@ -31,6 +31,10 @@ func (h *AuthHandler) SignUp(
 		Password: req.Password,
 	}
 	resp, err := h.authService.SignUp(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
+	
 
 	return &pb.AuthResponse{
 		User: &pb.User{
@@ -52,6 +56,9 @@ func (h *AuthHandler) SignIn(
 		Password: req.Password,
 	}
 	resp, err := h.authService.SignIn(ctx, dtoReq)
+	if err != nil {
+		return nil, err
+	}
 
 	return &pb.AuthResponse{
 		User: &pb.User{
@@ -74,6 +81,7 @@ func (h *AuthHandler) RefreshToken(
 	if err != nil {
 		return nil, err
 	}
+
 	return &pb.AuthResponse{
 		User: &pb.User{
 			Id: resp.UserID,
