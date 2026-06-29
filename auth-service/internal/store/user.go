@@ -81,7 +81,7 @@ func (s *UserStore) GetByEmail(
 func (s *UserStore) GetByID(
 	ctx context.Context,
 	db DBTX,
-	id int64,
+	id string,
 ) (*model.User, error) {
 
 	query := `
