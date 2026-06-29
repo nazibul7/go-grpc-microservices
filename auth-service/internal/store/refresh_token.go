@@ -43,7 +43,7 @@ func (s *RefreshTokenStore) GetByHash(
 	ctx context.Context,
 	db DBTX,
 	tokenHash string,
-) (int64, error) {
+) (string, error) {
 
 	query := `
 		SELECT user_id
@@ -53,7 +53,7 @@ func (s *RefreshTokenStore) GetByHash(
 		AND expires_at > NOW()
 	`
 
-	var userID int64
+	var userID string
 
 	err := db.QueryRowContext(
 		ctx,
@@ -62,7 +62,7 @@ func (s *RefreshTokenStore) GetByHash(
 	).Scan(&userID)
 
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	return userID, nil
