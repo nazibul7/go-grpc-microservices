@@ -1,6 +1,7 @@
 package client
 
 import (
+	interceptor "github.com/nazibul7/go-grpc-microservices/api-gateway/internal/grpc"
 	pb "github.com/nazibul7/go-grpc-microservices/proto/user"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,7 +18,10 @@ func NewUserClient() (*grpc.ClientConn, pb.UserServiceClient, error) {
 	// grpc.WithTransportCredentials(insecure.NewCredentials()) is required
 	// when not using TLS. Without this option, gRPC defaults to expecting
 	// a secure connection and will refuse to connect to a plaintext server.
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient("localhost:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(interceptor.AuthInterceptor),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
