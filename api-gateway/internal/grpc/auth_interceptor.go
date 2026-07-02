@@ -24,13 +24,15 @@ import (
 //      │
 // HTTP Handler
 //      │
-// userClient.GetUser(...)
+// h.client.GetUser(ctx, req)
 //      │
-// AuthInterceptor  <----- HERE
+// Generated gRPC stub
 //      │
-// Attach JWT as gRPC metadata
+// AuthInterceptor
 //      │
-// Auth/User Service
+// invoker(...)
+//      │
+// User Service
 func AuthInterceptor(
 	ctx context.Context,
 
