@@ -5,17 +5,20 @@ import (
 
 	"net"
 
+	pb "github.com/nazibul7/go-grpc-microservices/proto/user"
 	"github.com/nazibul7/go-grpc-microservices/user-service/internal/handler"
+	"github.com/nazibul7/go-grpc-microservices/user-service/internal/interceptor"
 	"github.com/nazibul7/go-grpc-microservices/user-service/internal/service"
 	"github.com/nazibul7/go-grpc-microservices/user-service/internal/store"
-	pb "github.com/nazibul7/go-grpc-microservices/proto/user"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 func NewGRPCServer(db *sql.DB) *grpc.Server {
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.AuthInterceptor),
+	)
 
 	userStore := store.NewUserStore(db)
 	userService := service.NewUserService(userStore)
