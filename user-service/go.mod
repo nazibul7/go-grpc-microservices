@@ -3,6 +3,7 @@ module github.com/nazibul7/go-grpc-microservices/user-service
 go 1.25.11
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	google.golang.org/grpc v1.81.1
 )
