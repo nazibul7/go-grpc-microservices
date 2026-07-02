@@ -27,6 +27,7 @@ func (h *AuthHandler) SignUp(
 	req *pb.SignUpRequest,
 ) (*pb.AuthResponse, error) {
 	dtoReq := dto.SignUpRequest{
+		Name:     req.Name,
 		Email:    req.Email,
 		Password: req.Password,
 	}
@@ -34,7 +35,6 @@ func (h *AuthHandler) SignUp(
 	if err != nil {
 		return nil, err
 	}
-	
 
 	return &pb.AuthResponse{
 		User: &pb.User{
