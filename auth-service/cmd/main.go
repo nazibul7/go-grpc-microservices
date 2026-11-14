@@ -28,7 +28,7 @@ func main() {
 	}
 	grpcServer := server.NewGRPCServer(db)
 
-	log.Println("gRPC server running on :50052")
+	log.Println("gRPC auth service server running on :50052")
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal(err)
