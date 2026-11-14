@@ -21,7 +21,7 @@ func (s *CredentialStore) Create(
 ) (*model.Credential, error) {
 
 	query := `
-		INSERT INTO users(id, email, password_hash)
+		INSERT INTO credentials(id, email, password_hash)
 		VALUES($1, $2, $3)
 		RETURNING id, email
 	`
@@ -54,7 +54,7 @@ func (s *CredentialStore) GetByEmail(
 
 	query := `
 		SELECT id, email, password_hash, role
-		FROM users
+		FROM credentials
 		WHERE email = $1
 	`
 
@@ -86,7 +86,7 @@ func (s *CredentialStore) GetByID(
 
 	query := `
 		SELECT id, email, role
-		FROM users
+		FROM credentials
 		WHERE id = $1
 	`
 
