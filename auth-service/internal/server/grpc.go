@@ -16,7 +16,7 @@ import (
 func NewGRPCServer(db *sql.DB) *grpc.Server {
 	grpcServer := grpc.NewServer()
 
-	userStore := store.NewUserStore()
+	userStore := store.NewCredentialStore()
 	refreshTokenStore := store.NewRefreshTokenStore()
 
 	conn, err := grpc.NewClient(":50051", 
