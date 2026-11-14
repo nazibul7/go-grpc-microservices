@@ -33,6 +33,6 @@ type RefreshTokenResponse struct {
 	RefreshToken string
 }
 
-type SignOutresponse struct {
+type SignOutResponse struct {
 	Message string
 }

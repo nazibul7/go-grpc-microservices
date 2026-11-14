@@ -6,19 +6,19 @@ import (
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/model"
 )
 
-type UserStore struct{}
+type CredentialStore struct{}
 
-func NewUserStore() *UserStore {
-	return &UserStore{}
+func NewCredentialStore() *CredentialStore {
+    return &CredentialStore{}
 }
 
-func (s *UserStore) Create(
+func (s *CredentialStore) Create(
 	ctx context.Context,
 	db DBTX,
 	userID string,
 	email string,
 	passwordHash string,
-) (*model.User, error) {
+) (*model.Credential, error) {
 
 	query := `
 		INSERT INTO users(id, email, password_hash)
@@ -26,7 +26,7 @@ func (s *UserStore) Create(
 		RETURNING id, email
 	`
 
-	user := &model.User{}
+	Credential := &model.Credential{}
 
 	err := db.QueryRowContext(
 		ctx,
@@ -35,22 +35,22 @@ func (s *UserStore) Create(
 		email,
 		passwordHash,
 	).Scan(
-		&user.ID,
-		&user.Email,
+		&Credential.ID,
+		&Credential.Email,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return Credential, nil
 }
 
-func (s *UserStore) GetByEmail(
+func (s *CredentialStore) GetByEmail(
 	ctx context.Context,
 	db DBTX,
 	email string,
-) (*model.User, error) {
+) (*model.Credential, error) {
 
 	query := `
 		SELECT id, email, password_hash, role
@@ -58,31 +58,31 @@ func (s *UserStore) GetByEmail(
 		WHERE email = $1
 	`
 
-	user := &model.User{}
+	Credential := &model.Credential{}
 
 	err := db.QueryRowContext(
 		ctx,
 		query,
 		email,
 	).Scan(
-		&user.ID,
-		&user.Email,
-		&user.PasswordHash,
-		&user.Role,
+		&Credential.ID,
+		&Credential.Email,
+		&Credential.PasswordHash,
+		&Credential.Role,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return Credential, nil
 }
 
-func (s *UserStore) GetByID(
+func (s *CredentialStore) GetByID(
 	ctx context.Context,
 	db DBTX,
 	id string,
-) (*model.User, error) {
+) (*model.Credential, error) {
 
 	query := `
 		SELECT id, email, role
@@ -90,21 +90,21 @@ func (s *UserStore) GetByID(
 		WHERE id = $1
 	`
 
-	user := &model.User{}
+	Credential := &model.Credential{}
 
 	err := db.QueryRowContext(
 		ctx,
 		query,
 		id,
 	).Scan(
-		&user.ID,
-		&user.Email,
-		&user.Role,
+		&Credential.ID,
+		&Credential.Email,
+		&Credential.Role,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return Credential, nil
 }

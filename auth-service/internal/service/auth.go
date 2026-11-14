@@ -15,14 +15,14 @@ import (
 
 type AuthService struct {
 	db                *sql.DB
-	userStore         *store.UserStore
+	userStore         *store.CredentialStore
 	refreshTokenStore *store.RefreshTokenStore
 	userClient        userpb.UserServiceClient
 }
 
 func NewAuthService(
 	db *sql.DB,
-	userStore *store.UserStore,
+	userStore *store.CredentialStore,
 	refreshTokenStore *store.RefreshTokenStore,
 	userClient userpb.UserServiceClient,
 ) *AuthService {
@@ -216,7 +216,7 @@ func (s *AuthService) RefreshToken(
 func (s *AuthService) SignOut(
 	ctx context.Context,
 	req dto.RefreshTokenRequest,
-) (*dto.SignOutresponse, error) {
+) (*dto.SignOutResponse, error) {
 
 	err := s.refreshTokenStore.Revoke(
 		ctx,
@@ -227,7 +227,7 @@ func (s *AuthService) SignOut(
 		return nil, err
 	}
 
-	return &dto.SignOutresponse{
+	return &dto.SignOutResponse{
 		Message: "logged out successfully",
 	}, nil
 }
