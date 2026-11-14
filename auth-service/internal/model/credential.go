@@ -1,6 +1,6 @@
 package model
 
-type User struct {
+type Credential struct {
 	ID           string
 	Email        string
 	PasswordHash string
