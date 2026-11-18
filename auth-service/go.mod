@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/nazibul7/go-grpc-microservices/proto v0.0.0-00010101000000-000000000000
 	golang.org/x/crypto v0.48.0
