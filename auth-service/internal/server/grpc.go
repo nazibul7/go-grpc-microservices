@@ -19,8 +19,8 @@ func NewGRPCServer(db *sql.DB) *grpc.Server {
 	userStore := store.NewCredentialStore()
 	refreshTokenStore := store.NewRefreshTokenStore()
 
-	conn, err := grpc.NewClient(":50051", 
-	grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(":50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil
 	}
