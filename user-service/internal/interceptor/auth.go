@@ -2,6 +2,8 @@ package interceptor
 
 import (
 	"context"
+	"crypto/subtle"
+	"os"
 	"strings"
 
 	"github.com/nazibul7/go-grpc-microservices/user-service/internal/utils"
@@ -16,10 +18,6 @@ type contextKey string
 const ClaimsKey contextKey = "claims"
 
 func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-
-	if info.FullMethod == "/user.UserService/CreateUser" {
-		return handler(ctx, req)
-	}
 	// Read incoming metadata.
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -39,6 +37,19 @@ func AuthInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, h
 	}
 
 	token := parts[1]
+
+	switch info.FullMethod {
+	case "/user.UserService/CreateUser",
+		"/user.UserService/DeleteUser":
+
+		serviceToken := os.Getenv("AUTH_SERVICE_TOKEN")
+		if serviceToken == "" ||
+			subtle.ConstantTimeCompare([]byte(token), []byte(serviceToken)) != 1 {
+			return nil, status.Error(codes.Unauthenticated, "invalid service credentials")
+		}
+
+		return handler(ctx, req)
+	}
 
 	// Verify JWT.
 	claims, err := utils.VerifyToken(token, "")
