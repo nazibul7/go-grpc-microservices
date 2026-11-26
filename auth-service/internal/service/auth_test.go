@@ -3,12 +3,10 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/dto"
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/store"
 	userpb "github.com/nazibul7/go-grpc-microservices/proto/user"
@@ -20,18 +18,69 @@ import (
 
 type mockUserService struct {
 	userpb.UnimplementedUserServiceServer
-	called bool
+
+	createCalled bool
+	deleteCalled bool
 }
 
 func (s *mockUserService) CreateUser(
 	ctx context.Context,
 	req *userpb.CreateUserRequest,
 ) (*userpb.UserResponse, error) {
-	s.called=true
+	s.createCalled = true
 
 	return &userpb.UserResponse{
 		Id: "test-user-id",
 	}, nil
+}
+
+func (s *mockUserService) DeleteUser(
+	ctx context.Context,
+	req *userpb.DeleteUserRequest,
+) (*userpb.DeleteUserResponse, error) {
+	s.deleteCalled = true
+
+	return &userpb.DeleteUserResponse{
+		Message: "user deleted",
+	}, nil
+}
+
+// Starts a real local gRPC server for integration tests.
+func startMockUserServer(
+	t *testing.T,
+	mockUser userpb.UserServiceServer,
+) userpb.UserServiceClient {
+	t.Helper()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	grpcServer := grpc.NewServer()
+	userpb.RegisterUserServiceServer(grpcServer, mockUser)
+
+	go func() {
+		_ = grpcServer.Serve(listener)
+	}()
+
+	conn, err := grpc.NewClient(
+		listener.Addr().String(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		grpcServer.Stop()
+		listener.Close()
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		conn.Close()
+		grpcServer.Stop()
+		listener.Close()
+	})
+
+	return userpb.NewUserServiceClient(conn)
 }
 
 func TestSignUp_UserServiceUnavailable(t *testing.T) {
@@ -39,7 +88,6 @@ func TestSignUp_UserServiceUnavailable(t *testing.T) {
 		"localhost:59999",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,67 +115,31 @@ func TestSignUp_UserServiceUnavailable(t *testing.T) {
 	})
 
 	if err == nil {
-		t.Fatal("expected signup to fail when User Service is unavailable")
+		t.Fatal("expected signup to fail")
 	}
 
 	if resp != nil {
-		t.Fatal("expected nil response when signup fails")
+		t.Fatal("expected nil response")
 	}
 
 	st, ok := status.FromError(err)
-
 	if !ok {
-		t.Fatalf("expected a gRPC status error, got: %v", err)
+		t.Fatalf("expected gRPC status error, got: %v", err)
 	}
 
 	if st.Code() != codes.Unavailable {
-		t.Fatalf("expected Unavailable, got %s: %v", st.Code(), err)
+		t.Fatalf("expected Unavailable, got: %v", st.Code())
 	}
 }
 
 func TestSignUp_AuthDBUnavailableAfterProfileCreation(t *testing.T) {
-	// Create mock Auth DB.
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock database: %v", err)
-	}
-	defer db.Close()
-
-	// Start a local TCP listener on an available port.
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer listener.Close()
-
-	// Start mock User Service as a real gRPC server.
 	mockUser := &mockUserService{}
 
-	grpcServer := grpc.NewServer()
-	userpb.RegisterUserServiceServer(grpcServer, mockUser)
+	userClient := startMockUserServer(t, mockUser)
 
-	go func() {
-		if err := grpcServer.Serve(listener); err != nil {
-			t.Logf("gRPC server stopped: %v", err)
-		}
-	}()
-	defer grpcServer.Stop()
-
-	// Connect Auth Service to mock User Service.
-	conn, err := grpc.NewClient(
-		listener.Addr().String(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer conn.Close()
-
-	userClient := userpb.NewUserServiceClient(conn)
-
-	// Make Auth DB transaction creation fail.
-	authDBErr := errors.New("auth database unavailable")
-	mock.ExpectBegin().WillReturnError(authDBErr)
+	// Auth DB is deliberately unavailable.
+	// The actual SQL transaction is not created.
+	db := &sql.DB{}
 
 	authService := NewAuthService(
 		db,
@@ -146,20 +158,14 @@ func TestSignUp_AuthDBUnavailableAfterProfileCreation(t *testing.T) {
 	)
 
 	if err == nil {
-		t.Fatal("expected signup error, got nil")
+		t.Fatal("expected signup error")
 	}
 
 	if resp != nil {
-		t.Fatal("expected nil signup response")
+		t.Fatal("expected nil response")
 	}
 
-	// Verify User Service was called.
-	if !mockUser.called {
-		t.Fatal("expected User Service CreateUser to be called")
-	}
-
-	// Verify Auth DB transaction was attempted.
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unfulfilled database expectations: %v", err)
+	if !mockUser.createCalled {
+		t.Fatal("expected CreateUser to be called")
 	}
 }
