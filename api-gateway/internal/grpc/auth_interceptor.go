@@ -15,23 +15,41 @@ import (
 // Flow:
 //
 // HTTP Client
-//      │
+//
+//	│
+//
 // Authorization: Bearer <jwt>
-//      │
+//
+//	│
+//
 // HTTP Middleware
-//      │
+//
+//	│
+//
 // Store token in context
-//      │
+//
+//	│
+//
 // HTTP Handler
-//      │
+//
+//	│
+//
 // h.client.GetUser(ctx, req)
-//      │
+//
+//	│
+//
 // Generated gRPC stub
-//      │
+//
+//	│
+//
 // AuthInterceptor
-//      │
+//
+//	│
+//
 // invoker(...)
-//      │
+//
+//	│
+//
 // User Service
 func AuthInterceptor(
 	ctx context.Context,
