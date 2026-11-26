@@ -9,7 +9,7 @@ import (
 type CredentialStore struct{}
 
 func NewCredentialStore() *CredentialStore {
-    return &CredentialStore{}
+	return &CredentialStore{}
 }
 
 func (s *CredentialStore) Create(

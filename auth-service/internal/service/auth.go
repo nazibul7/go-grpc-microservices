@@ -3,32 +3,36 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"log"
+	"os"
 	"time"
 
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/dto"
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/model"
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/store"
 	"github.com/nazibul7/go-grpc-microservices/auth-service/internal/utils"
+	"google.golang.org/grpc/metadata"
 
 	userpb "github.com/nazibul7/go-grpc-microservices/proto/user"
 )
 
 type AuthService struct {
 	db                *sql.DB
-	userStore         *store.CredentialStore
+	credentialStore   *store.CredentialStore
 	refreshTokenStore *store.RefreshTokenStore
 	userClient        userpb.UserServiceClient
 }
 
 func NewAuthService(
 	db *sql.DB,
-	userStore *store.CredentialStore,
+	credentialStore *store.CredentialStore,
 	refreshTokenStore *store.RefreshTokenStore,
 	userClient userpb.UserServiceClient,
 ) *AuthService {
 	return &AuthService{
 		db:                db,
-		userStore:         userStore,
+		credentialStore:   credentialStore,
 		refreshTokenStore: refreshTokenStore,
 		userClient:        userClient,
 	}
@@ -38,8 +42,17 @@ func (s *AuthService) SignUp(
 	ctx context.Context,
 	req dto.SignUpRequest,
 ) (*dto.SignUpResponse, error) {
+	serviceToken := os.Getenv("AUTH_SERVICE_TOKEN")
+	if serviceToken == "" {
+		return nil, errors.New("AUTH_SERVICE_TOKEN is not configured")
+	}
 
-	userResp, err := s.userClient.CreateUser(ctx, &userpb.CreateUserRequest{
+	userCtx := metadata.AppendToOutgoingContext(
+		ctx,
+		"authorization",
+		"Bearer "+serviceToken,
+	)
+	userResp, err := s.userClient.CreateUser(userCtx, &userpb.CreateUserRequest{
 		Name:  req.Name,
 		Email: req.Email,
 	})
@@ -51,17 +64,18 @@ func (s *AuthService) SignUp(
 	// hash password
 	passwordHash, err := utils.HashPassword(req.Password)
 	if err != nil {
-		return nil, err
+		return nil, s.compensateProfile(ctx, userResp.Id, err)
 	}
-
+	log.Println("out begin", userResp, err)
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		log.Println("begin", err)
+		return nil, s.compensateProfile(ctx, userResp.Id, err)
 	}
 
 	defer tx.Rollback()
 
-	user, err := s.userStore.Create(
+	user, err := s.credentialStore.Create(
 		ctx,
 		tx,
 		userResp.Id,
@@ -69,17 +83,17 @@ func (s *AuthService) SignUp(
 		passwordHash,
 	)
 	if err != nil {
-		return nil, err
+		return nil, s.compensateProfile(ctx, userResp.Id, err)
 	}
 
 	// generate tokens
 	accessToken, err := utils.GenerateAccessToken(user.ID, user.Email, model.Role(user.Role), 15*time.Minute, "")
 	if err != nil {
-		return nil, err
+		return nil, s.compensateProfile(ctx, userResp.Id, err)
 	}
 	refreshToken, expires_at, err := utils.GenerateRefreshToken()
 	if err != nil {
-		return nil, err
+		return nil, s.compensateProfile(ctx, userResp.Id, err)
 	}
 	// store hashed refresh token
 	err = s.refreshTokenStore.Create(
@@ -90,11 +104,11 @@ func (s *AuthService) SignUp(
 		expires_at,
 	)
 	if err != nil {
-		return nil, err
+		return nil, s.compensateProfile(ctx, userResp.Id, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, s.compensateProfile(ctx, userResp.Id, err)
 	}
 
 	return &dto.SignUpResponse{
@@ -109,7 +123,7 @@ func (s *AuthService) SignIn(
 	req dto.SignInRequest,
 ) (*dto.SignInResponse, error) {
 
-	user, err := s.userStore.GetByEmail(
+	user, err := s.credentialStore.GetByEmail(
 		ctx,
 		s.db,
 		req.Email,
@@ -162,7 +176,7 @@ func (s *AuthService) RefreshToken(
 		return nil, err
 	}
 
-	user, err := s.userStore.GetByID(
+	user, err := s.credentialStore.GetByID(
 		ctx,
 		s.db,
 		userID,
