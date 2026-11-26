@@ -28,7 +28,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	router.RegisterRouter(mux, authHandler, userHandler)
-	
+
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: mux,
