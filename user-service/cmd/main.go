@@ -2,13 +2,23 @@ package main
 
 import (
 	"log"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/nazibul7/go-grpc-microservices/user-service/internal/db"
 	"github.com/nazibul7/go-grpc-microservices/user-service/internal/server"
 )
 
 func main() {
-	connStr := `postgres://user_user:user_password@localhost:5434/user_db?sslmode=disable`
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file:", err)
+	}
+	connStr := os.Getenv("DB_URL")
+	if connStr == "" {
+		log.Fatal("DB_URL is not set")
+	}
+
 	if err := db.RunMigrations(connStr); err != nil {
 		log.Fatal(err)
 	}
@@ -20,7 +30,7 @@ func main() {
 
 	// Ensure the connection is closed when main exits
 	defer db.Close()
-	
+
 	lis, err := server.Listen(":50051")
 	if err != nil {
 		log.Fatal(err)
